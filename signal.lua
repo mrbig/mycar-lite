@@ -36,14 +36,15 @@ function stopSignal()
     for i = 1,2 do
         signal.enabled[i] = false
         gpio.write(signal.pins[i], gpio.HIGH)
-        for k,c in ipairs(server.conn) do
-            c:send("signal"..i.." 0\n")
-        end
+    end
+    for k,c in ipairs(server.conn) do
+        c:send("signal1 0\nsignal2 0\n")
     end
 end
 
 -- signal timer callback
 function cbSignal()
+    local send = ""
     for i=1,2 do
         local on;
         if (signal.enabled[i]) then
@@ -52,9 +53,11 @@ function cbSignal()
             on = gpio.HIGH
         end
         gpio.write(signal.pins[i], on)
-        for k,c in ipairs(server.conn) do
-            c:send("signal"..i.." "..(1-on).."\n")
-        end
+        send = send .. "signal"..i.." "..(1-on).."\n"
+        
     end
     signal.state = 1-signal.state
+    for k,c in ipairs(server.conn) do
+        c:send(send)
+    end
 end
