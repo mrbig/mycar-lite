@@ -15,7 +15,8 @@ net.dns.setdnsserver("192.168.1.254");
 server = {
     port = 9876,
     instance = nil,
-    buff = ""
+    buff = "",
+    conn = {}
 }
 
 -- servo config
@@ -45,6 +46,7 @@ signal = {
     tmr = 1,          -- timer id used for signaling
     enabled = {0, 0}, -- wich side is enabled
     state = 0,        -- how the active turns signals should be?
+    running = false,  -- is signaling running
     auto = true,      -- wether auto signaling is enabled-
     boundaries = {-15, 15} -- boundaries for signaling
 }

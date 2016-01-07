@@ -17,21 +17,34 @@ function init()
    gpio.mode(lights.pin, gpio.OUTPUT);
    gpio.write(lights.pin, gpio.HIGH);
 
+   -- turn signal setup
+   for i=1,2 do
+       gpio.mode(signal.pins[i], gpio.OUTPUT)
+       gpio.write(signal.pins[i], gpio.HIGH)
+   end
+
    initServer()
 end
 
--- server inicializalasa
+-- server initialization
 function initServer()
     server.instance = net.createServer(net.TCP, 28800)
     server.instance:listen(server.port, function(conn)
         print("RoboRemo connected")
 
+        table.insert(server.conn, conn)
+
         turn(0)
 
         conn:on("receive", receiveData)
         
-        conn:on("disconnection", function(c)
+        conn:on("disconnection", function(conn)
             print("RoboRemo disconnected")
+            for i=table.getn(server.conn), 1, -1 do
+                if (conn == server.conn[i]) then
+                    table.remove(server.conn, i)
+                end
+            end
             stop()
         end)
     end)
@@ -90,6 +103,8 @@ function turn(pos)
     local target = math.floor((pos + 90) * servo.step + servo.min)
     
     pwm.setduty(servo.pin, target)
+
+    autoSignal(pos)
     
 end
 
