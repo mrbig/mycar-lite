@@ -1,45 +1,4 @@
--- todo: kliens inaktivitaskor alljon meg
-
--- wifi config
-wifi.setmode(wifi.STATION)
-wifi.sta.config("nagya", "N3mGy3r3B3");
-
-wifi.sta.setip({
-  ip="192.168.1.81",
-  netmask="255.255.255.0",
-  gateway="192.168.1.254"
-});
-net.dns.setdnsserver("192.168.1.254");
-
--- server config
-server = {
-    port = 9876,
-    instance = nil,
-    buff = ""
-}
-
--- servo config
-servo = {
-    pin = 3,
-    min = 65,
-    max = 255
-}
-
--- motor config
-motor = {
-    pinA = 1,
-    pinB = 2,
-    reverse = 0,
-    pwm = nil -- ezt a pint iranyitjuk eppen
-}
-
--- lights config
-lights = {
-    pin = 8,
-    on = 0
-} 
-    
-
+-- incializalas
 function init()
    servo.step = (servo.max-servo.min)/180
 
