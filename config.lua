@@ -55,6 +55,13 @@ signal = {
     interval = 400    -- signal interval
 }
 
+-- monitor battery voltage
+vccmonitor = {
+    adc = 0,          -- adc used to read vcc
+    tmr = 3,          -- timer used for reporting
+    interval = 3000   -- report interval
+}
+
 -- macro config
 macro = {
     tmr = 2

@@ -31,6 +31,8 @@ function init()
    wifi.sta.eventMonStart()
 
    initServer()
+
+   startVccMonitor()
 end
 
 -- server initialization
@@ -124,11 +126,13 @@ function turn(pos)
     
 end
 
--- sebesseg beallitasa
--- speed: a kivant sebesseg 0 es 100 kozott
+-- set the speed
+-- speed: the desired speed between 0 and 100
 function setSpeed(speed)
-    if (speed > 100 or speed < 0) then
-        return
+    if (speed > 100) then
+        speed = 100
+    elseif (speed < 10) then
+        speed = 0 -- too low values would just stress the motor, but won't be able to turn it
     end
 
     --utana a bekapcsolasok
