@@ -21,9 +21,12 @@ server = {
 
 -- servo config
 servo = {
-    pin = 3,
+    pin = 8,
+    enable = 4,
     min = 65,
-    max = 255
+    max = 255,
+    center = -10.4, -- these values have to be set to your system. This is the center of the servo in degress
+    korrB = -2.7    -- this is the multiplication factor (endpoints)
 }
 
 -- motor config
@@ -36,17 +39,23 @@ motor = {
 
 -- lights config
 lights = {
-    pin = 7,
+    pin = 6,
     on = 0
 }
 
 -- turn signal config
 signal = {
-    pins = {5, 8},    -- the pins used to for output
+    pins = {5, 7},    -- the pins used to for output
     tmr = 1,          -- timer id used for signaling
     enabled = {0, 0}, -- wich side is enabled
     state = 0,        -- how the active turns signals should be?
     running = false,  -- is signaling running
     auto = true,      -- wether auto signaling is enabled-
-    boundaries = {-15, 15} -- boundaries for signaling
+    boundaries = {-15, 15}, -- boundaries for signaling (grad)
+    interval = 400    -- signal interval
+}
+
+-- macro config
+macro = {
+    tmr = 2
 }

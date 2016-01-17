@@ -3,6 +3,10 @@ function init()
    servo.step = (servo.max-servo.min)/180
 
    -- servo setup
+   -- we do some cheating here: frequency is set be the double than
+   -- required by the servo. So we send out two signals in one period.
+   -- My servo safely ignores the second pulse, and this way we get
+   -- double precion on the pulse length
    pwm.setup(servo.pin, 100, (servo.max + servo.min) / 2)
    pwm.start(servo.pin)
 
@@ -15,13 +19,16 @@ function init()
 
    -- lights setup
    gpio.mode(lights.pin, gpio.OUTPUT);
-   gpio.write(lights.pin, gpio.HIGH);
+   gpio.write(lights.pin, gpio.LOW);
 
    -- turn signal setup
    for i=1,2 do
        gpio.mode(signal.pins[i], gpio.OUTPUT)
-       gpio.write(signal.pins[i], gpio.HIGH)
+       gpio.write(signal.pins[i], gpio.LOW)
    end
+
+   wifi.sta.eventMonReg(wifi.STA_GOTIP, onWifiConnected)
+   wifi.sta.eventMonStart()
 
    initServer()
 end
@@ -34,7 +41,10 @@ function initServer()
 
         table.insert(server.conn, conn)
 
-        turn(0)
+        onConnect()
+
+        -- Turn on servo
+        gpio.write(servo.enable, gpio.LOW)
 
         conn:on("receive", receiveData)
         
@@ -45,12 +55,14 @@ function initServer()
                     table.remove(server.conn, i)
                 end
             end
-            stop()
+
+            onDisconnect()
+
         end)
     end)
 end
 
--- parancsok ertelmezese
+-- parse commands
 function parseCmd(str, conn)
     local start, finish, cmd, value = string.find(str, "(%w+) (-?[.%d]+)")
 
@@ -64,7 +76,10 @@ function parseCmd(str, conn)
     local ret = nil
 
     if (cmd == "turn")      then
-        turn(value * -8.9) -- turn ertek -10 es + 10 kozott jon
+        if (value < -8) then value = -8
+        elseif (value > 8) then value = 8
+        end
+        turn(value * servo.korrB + servo.center) -- this value is between -10 and + 10 (sent by roboremo)
     elseif (cmd == "speed") then setSpeed(value)
     elseif (cmd == "reverse") then setReverse(value)
     elseif (cmd == "lights") then ret = toggleLights(value)
@@ -77,10 +92,11 @@ function parseCmd(str, conn)
     end
 end
 
--- uzenet jott
--- az inputot mindaddig osszerakjuk, amig egy sortorest nem talalunk
--- ezutan a sortores elotti stringet atadjuk az execCmd-nek
--- ha tobb enter is jott, akkor azokat egyesevel feldolgozzuk
+-- new message has been received
+-- concatenate all input until a newline character has been received
+-- then the string before the newline is handed to parseCmd
+-- if there where multiple newlines in one data packet
+-- then each of them has to be handled
 function receiveData(conn, data)
     server.buff = server.buff .. data
 
@@ -93,8 +109,8 @@ function receiveData(conn, data)
     
 end
 
--- Mozgas adott poziciora
--- pos: a kivant pozicio -90 es +90 fok kozott
+-- Move servo to a given position
+-- pos: the requested servo position between -90 and 90 degrees
 function turn(pos) 
     if (pos < -90 or pos > 90) then
         return
@@ -121,8 +137,8 @@ function setSpeed(speed)
     
 end
 
--- hatramenet / eloremenet kozotti kapcsolas
--- reverse: ha 1, akkor hatramenetbe kapcsolunk
+-- switch between forward and reverse
+-- reverse: if true then we will go reversed
 function setReverse(reverse)
     pwm.setduty(motor.pwm, 0)
     if (reverse == 1) then
@@ -132,22 +148,15 @@ function setReverse(reverse)
     end
 end
 
--- vilagitas ki/be kapcsolasa
--- elso hivasra be, masodikra kikapcsolja a vilagitast
+-- turn the lighting on/off
+-- first call turn on the lighting, the second turns it off
 function toggleLights(value)
     lights.on = 1 - lights.on
     
-    gpio.write(lights.pin, 1 - lights.on)
+    gpio.write(lights.pin, lights.on)
 
     return "lights "..lights.on.."\n"
 end
 
--- mindent leallit
-function stop()
-    turn(0)
-    pwm.stop(servo.pin)
-    pwm.setduty(motor.pinA, 0)
-    pwm.setduty(motor.pinB, 0)
-end
 
 init()
